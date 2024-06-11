@@ -5,9 +5,10 @@ from bs4 import BeautifulSoup
 class TeaStoreUser(HttpUser):
     wait_time = between(1, 10)
     host = "http://10.1.1.1:8080/tools.descartes.teastore.webui"
-    product_id = 1  # Platzhalter, sollte dynamisch gesetzt werden
-    category_id = 1  # Platzhalter, sollte dynamisch gesetzt werden
+    product_id = 1 
+    category_id = 1  
     user_postfix = 1
+    browse_category_counter = 0 ## variable to simulate system errors
 
     def on_start(self):
         self.user_postfix = random.randint(1, 90)
@@ -18,7 +19,12 @@ class TeaStoreUser(HttpUser):
 
     @task(2)
     def browse_category(self):
-        self.client.get(f"/category?page=1&category={self.category_id}")
+        self.browse_category_counter += 1  
+        if self.browse_category_counter % 4 == 0:  
+            response = self.client.get("/non-existing-page")
+            print(f"Simulierter Fehler bei Aufruf {self.browse_category_counter}: Status Code {response.status_code}")
+        else:
+            self.client.get(f"/category?page=1&category={self.category_id}")
 
     @task(1)
     def view_product(self):
@@ -43,7 +49,7 @@ class TeaStoreUser(HttpUser):
 
     @task(2)
     def get_random_category_id(self):
-        response = self.client.get("/categories")  # Beispiel-URL, anpassen nach Bedarf
+        response = self.client.get("/categories") 
         soup = BeautifulSoup(response.text, 'html.parser')
         
         category_links = soup.find_all('a', href=True)
@@ -59,7 +65,7 @@ class TeaStoreUser(HttpUser):
 
     @task(3)
     def get_random_product_id(self):
-        response = self.client.get("/category?page=1&category=1")  # Beispiel-URL, anpassen nach Bedarf
+        response = self.client.get("/category?page=1&category=1")  
         soup = BeautifulSoup(response.text, 'html.parser')
         product_links = soup.find_all('a', href=True)
         product_ids = [link['href'] for link in product_links if 'product?id=' in link['href']]
@@ -67,7 +73,7 @@ class TeaStoreUser(HttpUser):
             random_product_link = random.choice(product_ids)
             product_id = random_product_link.split('=')[1]
             return product_id
-        return 1  # Standardwert, falls keine ID gefunden wird
+        return 1  # base case
 
     @task(1)
     def logout(self):
