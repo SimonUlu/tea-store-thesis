@@ -41,3 +41,59 @@ kubectl apply -f loadgenerator/loadgenerator-pod.yaml
 ```sh
 kubectl apply -f loadgenerator/loadgenerator-service.yaml
 ```
+
+
+## 2. Monitoring
+
+- Create new monitoring namespace to keep default namespace clean
+
+```sh
+kubectl create namespace monitoring
+```
+
+### a. Grafana
+
+- Create config map
+
+```sh
+kubectl create -f grafana/grafana-datasource-config.yaml
+```
+
+- Create the deployment/pod
+
+```sh
+  kubectl create -f grafana/deployment.yaml -n monitoring
+```
+
+- Create the service
+
+```sh
+  kubectl create -f grafana/service.yaml -n monitoring
+```
+
+
+### b. Prometheus
+
+- create cluster role
+
+```sh
+kubectl create -f prometheus/clusterRole.yaml
+```
+
+- run config map
+
+```sh
+kubectl create -f prometheus/config-map.yaml
+```
+
+- create deployment and service 
+
+```sh
+kubectl get pods --namespace=monitoring
+```
+
+```sh
+kubectl create -f prometheus-service.yaml --namespace=monitoring
+```
+
+- configurate the kube-state metrics according to the base docs in the root folder 
